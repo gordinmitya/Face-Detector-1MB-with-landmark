@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 import argparse
+import os
 
 import torch
+import pnnx
 
 from data import cfg_mnet, cfg_slim, cfg_rfb
 from models.retinaface import RetinaFace
@@ -100,20 +102,15 @@ if __name__ == "__main__":
     net = net.to(device)
 
     ##################export###############
-    output_onnx = "faceDetector.onnx"
+    os.makedirs("export", exist_ok=True)
+    output_onnx = "export/faceDetector.pt"
     print("==> Exporting model to ONNX format at '{}'".format(output_onnx))
-    input_names = ["input0"]
-    output_names = ["output0"]
     side = int(args.long_side)
     inputs = torch.randn(1, 3, side, side).to(device)
-    torch_out = torch.onnx.export(
+    pnnx.export(
         net,
-        inputs,
         output_onnx,
-        export_params=True,
-        verbose=False,
-        input_names=input_names,
-        output_names=output_names,
+        inputs,
     )
-    print("==> ONNX export finished!")
+    print("==> pnnx export finished!")
     ##################end###############

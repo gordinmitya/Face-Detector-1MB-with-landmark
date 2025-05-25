@@ -5,8 +5,9 @@ import os
 import torch
 import pnnx
 
-from data import cfg_mnet, cfg_slim, cfg_rfb
-from models.retinaface import RetinaFace
+# from models.retinaface import RetinaFace
+# from data import cfg_mnet
+from data import cfg_slim, cfg_rfb
 from models.net_slim import Slim
 from models.net_rfb import RFB
 
@@ -19,9 +20,11 @@ class ModelOptions:
 
 
 options = {
-    "mobile0.25": ModelOptions(
-        model=RetinaFace, cfg=cfg_mnet, weights="./weights/mobilenet0.25_Final.pth"
-    ),
+    # retinaface requires special anchors in FaceDetector.cpp
+    # https://github.com/biubug6/Face-Detector-1MB-with-landmark/blob/master/Face_Detector_ncnn/FaceDetector.cpp#L192
+    #     "mobile0.25": ModelOptions(
+    #         model=RetinaFace, cfg=cfg_mnet, weights="./weights/mobilenet0.25_Final.pth"
+    #     ),
     "RFB": ModelOptions(model=RFB, cfg=cfg_rfb, weights="./weights/RBF_Final.pth"),
     "slim": ModelOptions(model=Slim, cfg=cfg_slim, weights="./weights/slim_Final.pth"),
 }
@@ -98,16 +101,14 @@ if __name__ == "__main__":
     net.eval()
     print("Finished loading model!")
     print(net)
-    device = torch.device("cpu")
-    net = net.to(device)
 
     ##################export###############
     os.makedirs("export", exist_ok=True)
     output_onnx = "export/faceDetector.pt"
     print("==> Exporting model to ONNX format at '{}'".format(output_onnx))
     side = int(args.long_side)
-    inputs = torch.randn(1, 3, side, side).to(device)
-    pnnx.export(
+    inputs = torch.randn(1, 3, side, side)
+    res = pnnx.export(
         net,
         output_onnx,
         inputs,
